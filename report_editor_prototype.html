@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日報入力ツール（プロトタイプ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Shippori+Mincho+B1:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4efe4;--paper:#fffdf8;--ink:#211c16;--muted:#7c715f;--line:#e3dccb;
+    --accent:#c0843c;--accent-deep:#9a5e1f;--good:#3f7d5a;--behind:#b85c4a;
+    --shadow:0 1px 2px rgba(33,28,22,.04),0 8px 24px rgba(33,28,22,.05);
+    --serif:"Shippori Mincho B1",serif;--num:"Fraunces",serif;
+    --sans:"Zen Kaku Gothic New",-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(33,28,22,.025) 1px,transparent 1px);background-size:22px 22px;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header{border-top:3px solid var(--ink);padding-top:16px;margin-bottom:18px}
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:5px}
+  h1{font-family:var(--serif);font-weight:700;font-size:25px}
+  .lock{font-size:11.5px;color:var(--accent-deep);background:rgba(192,132,60,.1);border:1px dashed rgba(192,132,60,.45);border-radius:8px;padding:7px 12px;margin:12px 0 18px}
+  .lock b{color:var(--ink)}
+
+  .toolbar{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+  .field input{font-family:var(--sans);font-size:13px;border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:#fffefb}
+  .field input[type=number]{width:70px;font-family:var(--num)}
+  .toolbar .sp{margin-left:auto}
+
+  button{font-family:var(--sans);cursor:pointer;border:none;border-radius:7px;font-weight:700;transition:.15s}
+  .btn{background:var(--ink);color:#fdf6e8;font-size:12px;padding:8px 14px}
+  .btn:hover{background:#000}
+  .btn-line{background:transparent;border:1px solid var(--accent);color:var(--accent-deep);font-size:11.5px;padding:5px 11px}
+  .btn-line:hover{background:rgba(192,132,60,.1)}
+  .btn-x{background:transparent;color:var(--behind);font-size:11px;padding:5px 9px;border:1px solid transparent}
+  .btn-x:hover{border-color:var(--behind)}
+
+  /* division */
+  details.div{background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  details.div>summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:11px}
+  details.div>summary::-webkit-details-marker{display:none}
+  .chev{transition:transform .22s;color:var(--accent-deep);font-size:12px;flex:none}
+  details[open]>summary .chev{transform:rotate(90deg)}
+  .nm-div{font-family:var(--serif);font-weight:700;font-size:17px;border:1px solid transparent;border-radius:6px;padding:3px 7px;background:transparent;min-width:120px;color:var(--ink)}
+  .nm-div:hover,.nm-div:focus{border-color:var(--line);background:#fffefb;outline:none}
+  .div-body{padding:4px 16px 16px;border-top:1px solid var(--line)}
+  .sp{margin-left:auto}
+
+  /* project */
+  details.pj{border:1px solid var(--line);border-radius:11px;background:#fffefb;margin:10px 0 0;overflow:hidden}
+  details.pj>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;gap:10px}
+  details.pj>summary::-webkit-details-marker{display:none}
+  .nm-pj{font-weight:700;font-size:14px;border:1px solid transparent;border-radius:6px;padding:3px 7px;background:transparent;min-width:110px;color:var(--ink)}
+  .nm-pj:hover,.nm-pj:focus{border-color:var(--line);background:#fff;outline:none}
+  .pj-body{padding:6px 14px 14px;border-top:1px dashed var(--line)}
+
+  .blk-title{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--accent-deep);margin:14px 0 7px;display:flex;align-items:center;gap:8px}
+  .blk-title::before{content:"";width:13px;height:2px;background:var(--accent)}
+
+  /* targets */
+  .targets{display:flex;gap:10px;flex-wrap:wrap}
+  .tgt{display:flex;flex-direction:column;gap:2px}
+  .tgt label{font-size:10px;color:var(--muted);font-weight:700}
+  .tgt input{width:62px;font-family:var(--num);font-size:13px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:5px;background:#fffefb}
+
+  /* daily table */
+  .dwrap{overflow-x:auto}
+  table.daily{border-collapse:collapse;width:100%;font-size:12px;min-width:560px}
+  table.daily th{font-size:10px;color:var(--muted);font-weight:700;padding:5px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+  table.daily th:first-child{text-align:left}
+  table.daily td{padding:4px 6px;border-bottom:1px solid #efe9da;text-align:center}
+  table.daily input.date{font-family:var(--num);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:4px 5px;background:#fffefb;width:128px}
+  table.daily input.num{width:50px;font-family:var(--num);font-size:13px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:5px 2px;background:#fffefb}
+  table.daily input.num:focus{outline:none;border-color:var(--accent)}
+  .note-toggle{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:11px;padding:3px 7px;border-radius:6px}
+  .note-toggle.on{border-color:var(--accent);color:var(--accent-deep)}
+  .note-row td{padding:0 6px 8px}
+  .note-box{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .note-box .nb{display:flex;flex-direction:column;gap:3px}
+  .note-box label{font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.1em}
+  .note-box textarea{font-family:var(--sans);font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:7px;background:#fffefb;resize:vertical;min-height:54px;line-height:1.5}
+  .note-box textarea:focus{outline:none;border-color:var(--accent)}
+
+  /* weekly summary */
+  .wk-card{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:10px 13px;margin-bottom:8px;background:#fffefb}
+  .wk-card .wh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;flex-wrap:wrap;gap:6px}
+  .wk-card .wh .wt{font-family:var(--serif);font-weight:700;font-size:13px}
+  .wk-card .wh .wr{font-size:10.5px;color:var(--muted)}
+  .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+  .wcell{background:#faf6ec;border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+  .wcell .l{font-size:9.5px;color:var(--muted);font-weight:700}
+  .wcell .v{font-family:var(--num);font-size:16px;font-weight:600;margin:2px 0 1px}
+  .wcell .v .o{font-size:10px;color:var(--muted);font-weight:400}
+  .wcell .p{font-family:var(--num);font-size:10px;font-weight:600}
+  .wbar{height:4px;background:#eee6d6;border-radius:4px;overflow:hidden;margin-top:5px}
+  .wbar>i{display:block;height:100%;border-radius:4px}
+  .wconv{font-size:10.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .wconv b{font-family:var(--num);color:var(--ink);font-weight:600}.wconv .arr{color:var(--accent)}
+  .empty{font-size:11.5px;color:var(--muted);padding:8px 0}
+
+  /* charts */
+  .chart{background:#fffefb;border:1px solid var(--line);border-radius:9px;padding:10px 12px 6px}
+  .clegend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-top:6px}
+  .clegend span{display:inline-flex;align-items:center;gap:5px}.clegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .div-chart{border-left:3px solid var(--accent-deep)}
+
+  /* status */
+  .status{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:none}
+  .st-btn{font-size:10px;padding:4px 9px;background:transparent;color:var(--muted);font-weight:700;border:none}
+  .st-btn.on.act{background:var(--good);color:#fff}
+  .st-btn.on.stp{background:#8a8073;color:#fff}
+  .badge-stp{font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#fff;background:#8a8073;border-radius:100px;padding:2px 8px;flex:none}
+  details.pj.stopped{opacity:.66}
+  details.pj.stopped>summary .nm-pj{text-decoration:line-through;text-decoration-color:#bcb2a0}
+
+  @media(max-width:620px){.wgrid{grid-template-columns:repeat(2,1fr)}.note-box{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Daily Report Editor — Prototype</div>
+    <h1>日報入力ツール</h1>
+  </header>
+
+  <div class="lock">🔒 <b>アクセス制限について</b>：会社アドレスのみ閲覧・編集の制限は、このページを <b>GASウェブアプリ（組織内限定で公開）</b> として配置することで実現します（HTML単体では制限できません）。下記はUI確認用のプロトタイプです。</div>
+
+  <div class="toolbar">
+    <div class="field"><label>集計の開始日</label><input type="date" id="weekStart" value="2026-06-01"></div>
+    <div class="field"><label>1週間の日数</label><input type="number" id="weekLen" value="7" min="1" max="31"></div>
+    <button class="btn sp" onclick="addDivision()">＋ 事業部を追加</button>
+  </div>
+
+  <div id="root"></div>
+</div>
+
+<script>
+// ====== データモデル（プロトタイプ：メモリ内保持） ======
+const METRICS = ['ADアポ数','AD参加数','面談アポ数','面談参加数'];
+const COLOR = ['#c0843c','#9a5e1f','#3f7d5a','#b85c4a'];
+const DEFT = [5,4,3,2];
+const WD = ['日','月','火','水','木','金','土'];
+const uid = () => Math.random().toString(36).slice(2,9);
+
+let state = {
+  divisions: [{
+    id: uid(), name: 'IS事業部', open: true,
+    projects: [{
+      id: uid(), name: 'Star Creation Next', open: true, status: '運用中', targets: [...DEFT],
+      days: [
+        { id: uid(), date: '2026-06-04', actual: [2,1,1,1], jisshi: '【追っかけ】\n未返信の応募者へテキストでの追っかけを実施。', na: '' , noteOpen:false},
+        { id: uid(), date: '2026-06-05', actual: [2,0,0,0],
+          jisshi: '【面談アポ獲得】\n昨日のAD参加者は2名だったものの、1名は不合格、もう1名は折り返し対応が難しく獲得に至らず。架電で追っかけ。\n【追っかけ】\n「名前送付前」の応募者へ、画像中心のシナリオに加えテキストでの追っかけを実施。',
+          na: '【一斉送信】\n応募者の興味を引く訴求での一斉送信を実施。\n【画像ストック作成】\n定期送信に向け活用可能な画像のストックを作成。', noteOpen:true }
+      ]
+    }]
+  }]
+};
+
+// ====== ヘルパ ======
+const $ = id => document.getElementById(id);
+function findPJ(pid){ for(const d of state.divisions){ const p=d.projects.find(x=>x.id===pid); if(p) return p; } }
+function findDiv(did){ return state.divisions.find(d=>d.id===did); }
+function divIdOfPj(pid){ for(const d of state.divisions){ if(d.projects.some(p=>p.id===pid)) return d.id; } }
+function parseD(s){ return s ? new Date(s+'T00:00:00') : null; }
+function fmtMD(s){ const d=parseD(s); return d? (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')' : '—'; }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ====== 構造操作（再描画あり） ======
+function addDivision(){ state.divisions.push({id:uid(),name:'新規事業部',open:true,projects:[]}); renderAll(); }
+function removeDivision(did){ if(confirm('この事業部を削除しますか？')){ state.divisions=state.divisions.filter(d=>d.id!==did); renderAll(); } }
+function addProject(did){ findDiv(did).projects.push({id:uid(),name:'新規PJ',open:true,status:'運用中',targets:[...DEFT],days:[]}); renderAll(); }
+function removeProject(did,pid){ if(confirm('このPJを削除しますか？')){ const d=findDiv(did); d.projects=d.projects.filter(p=>p.id!==pid); renderAll(); } }
+function addDay(pid){
+  const pj=findPJ(pid);
+  let next = $('weekStart').value;
+  if(pj.days.length){ const last=parseD(pj.days[pj.days.length-1].date); last.setDate(last.getDate()+1); next=last.toISOString().slice(0,10); }
+  pj.days.push({id:uid(),date:next,actual:[0,0,0,0],jisshi:'',na:'',noteOpen:false});
+  renderAll();
+}
+function removeDay(pid,dayId){ const pj=findPJ(pid); pj.days=pj.days.filter(x=>x.id!==dayId); renderAll(); }
+function toggleNote(pid,dayId){ const pj=findPJ(pid); const dy=pj.days.find(x=>x.id===dayId); dy.noteOpen=!dy.noteOpen; renderAll(); }
+
+// ====== 入力反映（再描画なし＝フォーカス保持） ======
+function setDivName(did,v){ findDiv(did).name=v; }
+function setPjName(pid,v){ findPJ(pid).name=v; }
+function setTarget(pid,mi,v){ findPJ(pid).targets[mi]=Number(v)||0; refreshSummary(pid); }
+function setActual(pid,dayId,mi,v){ const dy=findPJ(pid).days.find(x=>x.id===dayId); dy.actual[mi]=Number(v)||0; refreshSummary(pid); refreshPJChart(pid); refreshDivChart(divIdOfPj(pid)); }
+function setDate(pid,dayId,v){ findPJ(pid).days.find(x=>x.id===dayId).date=v; refreshSummary(pid); refreshPJChart(pid); refreshDivChart(divIdOfPj(pid)); }
+function setText(pid,dayId,key,v){ findPJ(pid).days.find(x=>x.id===dayId)[key]=v; }
+function setStatus(pid,v){ findPJ(pid).status=v; renderAll(); }
+function setOpenDiv(did,v){ findDiv(did).open=v; }
+function setOpenPj(pid,v){ findPJ(pid).open=v; }
+
+// ====== 集計 ======
+function weekIndexOf(dateStr){
+  const start=parseD($('weekStart').value), len=Math.max(1,Number($('weekLen').value)||7);
+  const d=parseD(dateStr); if(!start||!d) return 0;
+  return Math.floor((d-start)/86400000/len);
+}
+function pctColor(p){ return p>=100?'var(--good)':(p>=70?'var(--accent-deep)':'var(--behind)'); }
+
+function summaryInner(pj){
+  if(!pj.days.length) return '<div class="empty">「＋ 日次を追加」から入力すると、ここに週次サマリーが出ます。</div>';
+  const len=Math.max(1,Number($('weekLen').value)||7);
+  const groups={};
+  pj.days.forEach(dy=>{ const k=weekIndexOf(dy.date); (groups[k]=groups[k]||[]).push(dy); });
+  const keys=Object.keys(groups).map(Number).sort((a,b)=>a-b);
+  let html='';
+  keys.forEach(k=>{
+    const days=groups[k].slice().sort((a,b)=>parseD(a.date)-parseD(b.date));
+    const tot=[0,0,0,0]; days.forEach(dy=>dy.actual.forEach((v,i)=>tot[i]+=Number(v)||0));
+    const nd=days.length;
+    const cells=METRICS.map((nm,i)=>{
+      const tgt=pj.targets[i]*nd, p=tgt? Math.round(tot[i]/tgt*100):0, c=pctColor(p);
+      return `<div class="wcell"><div class="l">${nm}</div><div class="v">${tot[i]}<span class="o"> / ${tgt}</span></div>`+
+             `<div class="p" style="color:${c}">${p}%</div><div class="wbar"><i style="width:${Math.min(p,100)}%;background:${c}"></i></div></div>`;
+    }).join('');
+    const r1=tot[0]?Math.round(tot[1]/tot[0]*100):0, r2=tot[1]?Math.round(tot[2]/tot[1]*100):0, r3=tot[2]?Math.round(tot[3]/tot[2]*100):0;
+    const range=`${fmtMD(days[0].date)} 〜 ${fmtMD(days[nd-1].date)} ・ ${nd}日分`;
+    html+=`<div class="wk-card"><div class="wh"><span class="wt">第${k+1}週</span><span class="wr">${range}</span></div>`+
+          `<div class="wgrid">${cells}</div>`+
+          `<div class="wconv"><span>転換率</span><b>${tot[0]}</b><span class="arr">→</span><b>${tot[1]}</b>(${r1}%)<span class="arr">→</span><b>${tot[2]}</b>(${r2}%)<span class="arr">→</span><b>${tot[3]}</b>(${r3}%)</div></div>`;
+  });
+  return html;
+}
+function refreshSummary(pid){ const el=$('sum-'+pid); if(el) el.innerHTML=summaryInner(findPJ(pid)); }
+function refreshAllSummaries(){ state.divisions.forEach(d=>d.projects.forEach(p=>refreshSummary(p.id))); }
+
+// ====== グラフ ======
+function fmtShort(s){ const d=parseD(s); return d?(d.getMonth()+1)+'/'+d.getDate():''; }
+function legendHTML(){ return '<div class="clegend">'+METRICS.map((nm,i)=>`<span><i style="background:${COLOR[i]}"></i>${nm}</span>`).join('')+'</div>'; }
+function chartSVG(dates, series){
+  if(!dates.length) return '<div class="empty">日次データを追加するとグラフが表示されます。</div>';
+  const W=640,H=200,pl=32,pr=14,pt=14,pb=26,pw=W-pl-pr,ph=H-pt-pb;
+  let maxv=1; series.forEach(s=>s.data.forEach(v=>{ if(v>maxv) maxv=v; }));
+  maxv=Math.max(2,Math.ceil(maxv*1.15));
+  const n=dates.length;
+  const x=i=> n===1 ? pl+pw/2 : pl+pw*i/(n-1);
+  const y=v=> pt+ph*(1-v/maxv);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+  [0,Math.round(maxv/2),maxv].forEach(g=>{
+    s+=`<line x1="${pl}" y1="${y(g).toFixed(1)}" x2="${W-pr}" y2="${y(g).toFixed(1)}" stroke="#e3dccb" stroke-width="1"/>`;
+    s+=`<text x="${pl-6}" y="${(y(g)+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#9a8f7c" font-family="Fraunces,serif">${g}</text>`;
+  });
+  series.forEach(se=>{
+    let d=''; se.data.forEach((v,i)=>{ d+=(i===0?'M':'L')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' '; });
+    s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    se.data.forEach((v,i)=>{ s+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.4" fill="#fffefb" stroke="${se.color}" stroke-width="1.6"/>`; });
+  });
+  const idxs = n<=5 ? dates.map((_,i)=>i) : [0,Math.floor((n-1)/2),n-1];
+  idxs.forEach(i=>{ s+=`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="#9a8f7c" font-family="Fraunces,serif">${fmtShort(dates[i])}</text>`; });
+  s+='</svg>';
+  return s;
+}
+function pjChartInner(pj){
+  const days=pj.days.slice().sort((a,b)=>parseD(a.date)-parseD(b.date));
+  if(!days.length) return '<div class="empty">日次データを追加するとグラフが表示されます。</div>';
+  const dates=days.map(d=>d.date);
+  const series=METRICS.map((nm,mi)=>({color:COLOR[mi],data:days.map(d=>Number(d.actual[mi])||0)}));
+  return chartSVG(dates,series)+legendHTML();
+}
+function divChartInner(div){
+  const actives=div.projects.filter(p=>p.status!=='停止中');
+  const set={}; actives.forEach(p=>p.days.forEach(dy=>{ set[dy.date]=true; }));
+  const dates=Object.keys(set).sort((a,b)=>parseD(a)-parseD(b));
+  if(!dates.length) return '<div class="empty">運用中PJの日次データがありません。</div>';
+  const series=METRICS.map((nm,mi)=>({color:COLOR[mi],data:dates.map(dt=>{
+    let sum=0; actives.forEach(p=>{ const dy=p.days.find(x=>x.date===dt); if(dy) sum+=Number(dy.actual[mi])||0; }); return sum;
+  })}));
+  return chartSVG(dates,series)+legendHTML();
+}
+function refreshPJChart(pid){ const el=$('pjchart-'+pid); if(el) el.innerHTML=pjChartInner(findPJ(pid)); }
+function refreshDivChart(did){ const el=$('divchart-'+did); if(el) el.innerHTML=divChartInner(findDiv(did)); }
+
+// ====== 描画 ======
+function dayRow(pid,dy){
+  const nums=dy.actual.map((v,i)=>`<td><input class="num" type="number" min="0" value="${v}" oninput="setActual('${pid}','${dy.id}',${i},this.value)"></td>`).join('');
+  let row=`<tr><td><input class="date" type="date" value="${dy.date}" onchange="setDate('${pid}','${dy.id}',this.value)"></td>${nums}`+
+          `<td><button class="note-toggle ${dy.noteOpen?'on':''}" onclick="toggleNote('${pid}','${dy.id}')">📝 施策</button></td>`+
+          `<td><button class="btn-x" onclick="removeDay('${pid}','${dy.id}')">削除</button></td></tr>`;
+  if(dy.noteOpen){
+    row+=`<tr class="note-row"><td colspan="7"><div class="note-box">`+
+         `<div class="nb"><label>実施事項</label><textarea oninput="setText('${pid}','${dy.id}','jisshi',this.value)">${esc(dy.jisshi)}</textarea></div>`+
+         `<div class="nb"><label>ネクストアクション（NA）</label><textarea oninput="setText('${pid}','${dy.id}','na',this.value)">${esc(dy.na)}</textarea></div>`+
+         `</div></td></tr>`;
+  }
+  return row;
+}
+function pjHTML(did,pj){
+  const targets=METRICS.map((nm,i)=>`<div class="tgt"><label>${nm} 目標</label><input type="number" min="0" value="${pj.targets[i]}" oninput="setTarget('${pj.id}',${i},this.value)"></div>`).join('');
+  const rows=pj.days.slice().sort((a,b)=>parseD(a.date)-parseD(b.date)).map(dy=>dayRow(pj.id,dy)).join('');
+  const stopped = pj.status==='停止中';
+  const statusUI=`<span class="status">`+
+    `<button class="st-btn act ${!stopped?'on':''}" onclick="event.preventDefault();setStatus('${pj.id}','運用中')">運用中</button>`+
+    `<button class="st-btn stp ${stopped?'on':''}" onclick="event.preventDefault();setStatus('${pj.id}','停止中')">停止中</button></span>`;
+  return `<details class="pj ${stopped?'stopped':''}" ${pj.open?'open':''} ontoggle="setOpenPj('${pj.id}',this.open)">
+    <summary><span class="chev">▶</span>
+      <input class="nm-pj" value="${esc(pj.name)}" oninput="setPjName('${pj.id}',this.value)" onclick="event.preventDefault()">
+      ${stopped?'<span class="badge-stp">停止中</span>':''}
+      <span class="sp"></span>
+      ${statusUI}
+      <button class="btn-x" onclick="event.preventDefault();removeProject('${did}','${pj.id}')">PJ削除</button>
+    </summary>
+    <div class="pj-body">
+      <div class="blk-title">目標設定（1日あたり）</div>
+      <div class="targets">${targets}</div>
+      <div class="blk-title">日次入力</div>
+      <div class="dwrap"><table class="daily">
+        <thead><tr><th>日付</th><th>ADアポ</th><th>AD参加</th><th>面談アポ</th><th>面談参加</th><th></th><th></th></tr></thead>
+        <tbody>${rows||''}</tbody>
+      </table></div>
+      <button class="btn-line" style="margin-top:8px" onclick="addDay('${pj.id}')">＋ 日次を追加</button>
+      <div class="blk-title">推移グラフ（日次）</div>
+      <div class="chart" id="pjchart-${pj.id}">${pjChartInner(pj)}</div>
+      <div class="blk-title">週次サマリー</div>
+      <div id="sum-${pj.id}">${summaryInner(pj)}</div>
+    </div>
+  </details>`;
+}
+function divHTML(div){
+  const pjs=div.projects.map(p=>pjHTML(div.id,p)).join('');
+  const activeCnt=div.projects.filter(p=>p.status!=='停止中').length;
+  return `<details class="div" ${div.open?'open':''} ontoggle="setOpenDiv('${div.id}',this.open)">
+    <summary><span class="chev">▶</span>
+      <input class="nm-div" value="${esc(div.name)}" oninput="setDivName('${div.id}',this.value)" onclick="event.preventDefault()">
+      <span class="sp"></span>
+      <button class="btn-line" onclick="event.preventDefault();addProject('${div.id}')">＋ PJ追加</button>
+      <button class="btn-x" onclick="event.preventDefault();removeDivision('${div.id}')">事業部削除</button>
+    </summary>
+    <div class="div-body">
+      <div class="blk-title">事業部サマリー（推移・運用中${activeCnt}PJを合算）</div>
+      <div class="chart div-chart" id="divchart-${div.id}">${divChartInner(div)}</div>
+      ${pjs||'<div class="empty" style="padding:10px 2px">「＋ PJ追加」からプロジェクトを追加してください。</div>'}
+    </div>
+  </details>`;
+}
+function renderAll(){ $('root').innerHTML = state.divisions.map(divHTML).join('') || '<div class="empty">「＋ 事業部を追加」から始めてください。</div>'; }
+
+// 期間設定の変更でサマリーだけ更新
+$('weekStart').addEventListener('change', refreshAllSummaries);
+$('weekLen').addEventListener('input', refreshAllSummaries);
+
+renderAll();
+</script>
+</body>
+</html>
